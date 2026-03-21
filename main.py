@@ -1,6 +1,6 @@
 """
 Disease Risk Prediction API  —  Diabetes Edition
-Person 3: API Developer
+Euodia Ebalu: API Developer
 FastAPI + Pydantic data validation
 Model: RandomForestClassifier trained on the Pima Indians Diabetes Dataset
 """
