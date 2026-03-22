@@ -31,7 +31,7 @@ A machine learning API that predicts the risk of diabetes based on patient clini
                         └─────────────────────────────────┘
 ```
 
-**Input:** 8 patient clinical features as JSON  
+**Input:** 8 patient clinical features as JSON
 **Output:** Diabetes prediction, probability score, and risk category (Low / Moderate / High)
 
 ---
@@ -50,7 +50,7 @@ A machine learning API that predicts the risk of diabetes based on patient clini
 
 ---
 
-## ⚙️ Setup Instructions
+## ⚙️ Local Setup Instructions
 
 ### Prerequisites
 - Python 3.9 or higher
@@ -71,32 +71,111 @@ pip install -r requirements.txt
 
 ### 3. (Optional) Retrain the model
 
-The trained model (`diabetes_model.pkl`) is already included. If you want to retrain it from scratch:
+The trained model (`diabetes_model.pkl`) is already included. To retrain from scratch:
 
 ```bash
 python3 train_model.py
 ```
 
-### 4. Run the API
+### 4. Run the API locally
 
 ```bash
 python3 -m uvicorn main:app --reload
 ```
 
-The API will be running at: `http://localhost:8000`
+API runs at: `http://localhost:8000`
 
 ### 5. Open the interactive docs
 
-Go to: `http://localhost:8000/docs`
+```
+http://localhost:8000/docs
+```
 
-This is the auto-generated Swagger UI where you can test all endpoints directly in your browser.
+---
+
+## 🐳 Deployment — Docker & GCP Cloud Run
+
+This API is containerised with Docker and deployed to **Google Cloud Platform (GCP) Cloud Run**.
+
+### How the Docker container works
+
+The `Dockerfile` defines how the application is packaged:
+
+```dockerfile
+FROM python:3.11
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+
+EXPOSE 8080
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+```
+
+- Starts from a Python 3.11 base image
+- Copies and installs all dependencies from `requirements.txt`
+- Copies all project files including `main.py` and `diabetes_model.pkl`
+- Exposes port 8080 (required by Cloud Run)
+- Starts the FastAPI app using uvicorn on startup
+
+### Deployment Steps to GCP Cloud Run
+
+**Step 1 — Install and configure Google Cloud SDK:**
+```bash
+brew install --cask google-cloud-sdk
+gcloud init
+```
+
+**Step 2 — Enable required GCP services:**
+```bash
+gcloud services enable cloudbuild.googleapis.com run.googleapis.com containerregistry.googleapis.com
+```
+
+**Step 3 — Build the Docker image on GCP:**
+```bash
+gcloud builds submit --tag gcr.io/system-analysis-491003/diabetes-risk-api
+```
+This uploads the project files to GCP and builds the Docker image in the cloud using Cloud Build.
+
+**Step 4 — Deploy to Cloud Run:**
+```bash
+gcloud run deploy diabetes-risk-api \
+  --image gcr.io/system-analysis-491003/diabetes-risk-api \
+  --platform managed \
+  --region northamerica-northeast2 \
+  --allow-unauthenticated
+```
+
+**Step 5 — Access the live API:**
+
+Once deployed, Cloud Run provides a public HTTPS URL:
+```
+https://systemanalysisproject-497498208403.northamerica-northeast2.run.app
+```
+
+Interactive API docs:
+```
+https://systemanalysisproject-497498208403.northamerica-northeast2.run.app/docs
+```
+
+### Why Cloud Run?
+
+- **Serverless** — no server management required, scales automatically
+- **Pay per use** — only billed when the API is receiving requests
+- **Free tier** — 2 million requests per month free
+- **HTTPS by default** — secure endpoint provided automatically
+- **Container-based** — consistent environment between local and production
 
 ---
 
 ## 🔌 API Endpoints
 
 ### `GET /`
-Health check — confirms the API is running.
+Confirms the API is running.
 
 **Response:**
 ```json
@@ -153,24 +232,6 @@ Submit patient clinical features and receive a diabetes risk prediction.
 
 ---
 
-## 🐳 Running with Docker
-
-### Build the image
-
-```bash
-docker build -t diabetes-risk-api .
-```
-
-### Run the container
-
-```bash
-docker run -p 8080:8080 diabetes-risk-api
-```
-
-The API will be available at: `http://localhost:8080`
-
----
-
 ## 🤖 Model Information
 
 | Property | Detail |
@@ -213,5 +274,5 @@ joblib
 
 ## 👤 Author
 
-**Euodia Ebalu— API Developer**  
+**Person 3 — API Developer (Euodia Ebalu)**
 Assignment 2 Part B — Systems Analysis and Design
